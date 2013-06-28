@@ -1,145 +1,24 @@
-var mongodb = require('mongodb'),
-    Db = mongodb.Db,
-    Server = mongodb.Server;
-var Q = require('q');
+var MongoClient = require('mongodb').MongoClient;
 var querystring = require('querystring');
+var async = require('async');
 
-var NutProvider = exports.NutProvider = function NutProvider(host, port, check_db) {
-  this.db = new Db('nutlist', new Server(host, port, {auto_reconnect: true}, {w: 1}), {safe: false});
-  this.db.open(function(err, db){
-    if (err) { console.log('open error:', err); }
+// Helper functions
+function get_collection(callback) {
+  MongoClient.connect('mongodb://localhost:27017/nutlist', {
+    db: {safe: false, w: 1},
+    server: {auto_reconnect: true, w: 1}
+  }, function(err, db) {
+    if (err) { callback(err); }
     else {
-      if (check_db) {
-        var col = db.collection('nuts');
-        col.find().toArray(function(err, results) {
-          console.log('db check err:', err);
-          console.log('db check results:', results);
-          console.log('db check results:', results.length);
-        });
-      }
-    }
-  });
-};
-
-NutProvider.prototype.getCollection = function() {
-  var deferred = Q.defer();
-
-  this.db.collection('nuts', function(err, collection) {
-    if (err) {
-      this.db.createCollection('nuts', function(cr_err, cr_col) {
-        if (cr_err) deferred.reject(cr_err);
-        else deferred.resolve(cr_col);
+      db.collection('nuts', {strict:true}, function(get_err, col) {
+        if (get_err) {
+          db.createCollection('nuts', callback);
+        }
+        else { callback(null, col); }
       });
     }
-    else deferred.resolve(collection);
   });
-
-  return deferred.promise;
-};
-
-NutProvider.prototype.getByDate = function(dates) {
-  var deferred = Q.defer();
-
-  this.getCollection().then(function(collection) {
-    var query = {};
-    if (dates['from']) {
-      query['$gte'] = parseInt(dates['from'], 10);
-    }
-    if (dates['to']) {
-      query['$lt'] = parseInt(dates['to'], 10);
-    }
-    collection.find({'updated_time': query}).sort('updated_time', 1).toArray(function(find_err, docs) {
-      console.log('err:', find_err);
-      console.log('results:', map_results(docs));
-      if (find_err) deferred.reject(find_err);
-      else deferred.resolve(map_results(docs));
-    });
-  }, function(err){ deferred.reject(err); });
-
-  return deferred.promise;
-};
-
-NutProvider.prototype.getByUserId = function(userId, dates) {
-  var deferred = Q.defer();
-
-  this.getCollection().then(function(collection) {
-    var query = {
-      'from.id': userId
-    };
-    if (dates) {
-      if (dates['from']) {
-        query['updated_time'] = query['updated_time'] || {};
-        query['updated_time']['$gte'] = dates['from'];
-      }
-      if (dates['to']) {
-        query['updated_time'] = query['updated_time'] || {};
-        query['updated_time']['$lt'] = dates['to'];
-      }
-    }
-    console.log('got collection:', query);
-    collection.find(query).sort('updated_time', -1).toArray(function(find_err, docs) {
-      console.log('actual results:', find_err);
-      if (find_err) deferred.reject(find_err);
-      else deferred.resolve(map_results(docs));
-    });
-  }, function(err){ deferred.reject(err); });
-
-  return deferred.promise;
-};
-
-NutProvider.prototype.getLatest = function() {
-  var deferred = Q.defer();
-
-  this.getCollection().then(function(collection) {
-    collection.find({'id': {'$gt': '0'}}).sort('updated_time', -1).limit(1).toArray(function(find_err, result) {
-      if (find_err) deferred.reject(find_err);
-      else deferred.resolve(result && result.length ? result[0] : null);
-    });
-  }, function(err){ deferred.reject(err); });
-
-  return deferred.promise;
-};
-
-NutProvider.prototype.getLastChecked = function() {
-  var deferred = Q.defer();
-
-  this.getCollection().then(function(collection) {
-    collection.find({'key': 'last_checked'}).toArray(function(find_err, docs) {
-      if (find_err) deferred.reject(find_err);
-      else deferred.resolve(docs && docs.length ? docs[0]['time'] : null);
-    });
-  }, function(err){ deferred.reject(err); })
-
-  return deferred.promise;
-};
-
-NutProvider.prototype.setLastChecked = function(last_checked) {
-  var deferred = Q.defer();
-
-  this.getCollection().then(function(collection) {
-    collection.update({'key': 'last_checked'}, {$set: {'time': last_checked}}, {upsert: true});
-  }, function(err){ deferred.reject(err); });
-
-  return deferred.promise;
-};
-
-NutProvider.prototype.processNut = function(nut) {
-  var deferred = Q.defer();
-  
-  nut = process_raw_nut(nut);
-
-  this.getCollection().then(function(collection) {
-    collection.find({'id': nut['id']}).toArray(function(find_err, docs) {
-      if (find_err || !docs || !docs.length) {
-        collection.save(nut);
-        console.log('saved nut:', nut['id']);
-      }
-      deferred.resolve(nut);
-    });
-  }, function(err){ deferred.reject(err); });
-
-  return deferred.promise;
-};
+}
 
 function process_raw_nut(nut) {
   ['created_time', 'updated_time'].forEach(function(time) {
@@ -172,3 +51,116 @@ function result_mapper(item) {
     item['updated_time'] = new Date(item['updated_time']).toString("M/d/yyyy h:mm tt");
   return item;
 }
+
+// External API
+var NutProvider = exports.NutProvider = {
+
+  getByDate: function(dates, callback) {
+    get_collection(function(err, collection) {
+      if (err) { callback(err); }
+      else {
+        var query = {};
+        if (dates['from']) {
+          query['$gte'] = parseInt(dates['from'], 10);
+        }
+        if (dates['to']) {
+          query['$lt'] = parseInt(dates['to'], 10);
+        }
+        collection.find({'updated_time': query}).sort('updated_time', 1).toArray(function(find_err, docs) {
+          console.log('err:', find_err);
+          console.log('results:', map_results(docs));
+          if (find_err) callback(find_err);
+          else callback(null, map_results(docs));
+        });
+      }
+    });
+  },
+
+  getByUserId: function(userId, dates, callback) {
+    get_collection(function(err, collection) {
+      if (err) { callback(err); }
+      else {
+        var query = {
+          'from.id': userId
+        };
+        if (dates) {
+          if (dates['from']) {
+            query['updated_time'] = query['updated_time'] || {};
+            query['updated_time']['$gte'] = dates['from'];
+          }
+          if (dates['to']) {
+            query['updated_time'] = query['updated_time'] || {};
+            query['updated_time']['$lt'] = dates['to'];
+          }
+        }
+        console.log('got collection:', query);
+        collection.find(query).sort('updated_time', -1).toArray(function(find_err, docs) {
+          console.log('actual results:', find_err);
+          if (find_err) callback(find_err);
+          else callback(null, map_results(docs));
+        });
+      }
+    });
+  },
+
+  getLatest: function(callback) {
+    get_collection(function(err, collection) {
+      if (err) { callback(err); }
+      else {
+        collection.find({'id': {'$gt': '0'}}).sort('updated_time', -1).limit(1).toArray(function(find_err, result) {
+          if (find_err) callback(find_err);
+          else callback(null, result && result.length ? result[0] : null);
+        });
+      }
+    });
+  },
+
+  getLastChecked: function(callback) {
+    get_collection(function(err, collection) {
+      if (err) { callback(err); }
+      else{
+        collection.find({'key': 'last_checked'}).toArray(function(find_err, docs) {
+          if (find_err) callback(find_err);
+          else callback(null, docs && docs.length ? docs[0]['time'] : null);
+        });
+      }
+    });
+  },
+
+  setLastChecked: function(last_checked, callback) {
+    get_collection(function(err, collection) {
+      if (err) { callback(err); }
+      else {
+        collection.update({'key': 'last_checked'}, {$set: {'time': last_checked}}, {upsert: true}, function(upd_err) {
+          if (upd_err || callback) callback(upd_err);
+        });
+      }
+    });
+  },
+
+  processNuts: function(raw_nuts, callback) {
+    async.map(raw_nuts, function(nut, p_cb) {
+      get_collection(function(col1_err, collection) {
+        if (col1_err) { p_cb(col1_err); }
+        else {
+          collection.find({'id': nut['id']}).toArray(function(find_err, docs) {
+            if (find_err || !docs || !docs.length) {
+              p_cb(null, process_raw_nut(nut));
+            }
+          });
+        }
+      });
+    }, function(err, nuts) {
+      if (err) {callback(err);}
+      else {
+        get_collection(function(col2_err, collection) {
+          if (col2_err) { callback(col2_err); }
+          else {
+            collection.insert(nuts, callback);
+          }
+        });
+      }
+    });
+  }
+
+};

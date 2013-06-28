@@ -1,5 +1,4 @@
-var NutProvider = require('./nutprovider').NutProvider,
-    client = new NutProvider('localhost', 27017);
+var NutProvider = require('./nutprovider').NutProvider;
 
 var Cacher = exports.Cacher = function Cacher(options) {
   this.options = options = options || {};
@@ -7,7 +6,7 @@ var Cacher = exports.Cacher = function Cacher(options) {
   // default the interval to 30 minutes (in mils)
   this.options['interval'] = options['interval'] || 30 * 60000;
 
-  client.getLastChecked().then(function(value) {
+  NutProvider.getLastChecked(function(err, value) {
     this.last_checked = value;
   }.bind(this));
 
@@ -36,17 +35,20 @@ Cacher.prototype.process = function(graph) {
 
     console.log('url:', url);
     graph.get(url, function process_response(err, response) {
+      if (err) {console.log('proc err:', err);}
       var data = response['data'] || [];
-      data.forEach(function (item) {
-        if (item['type'] == 'video') {
-          console.log('adding item:', item['id']);
-          client.processNut(item).done();
+      console.log('data length:', data.length);
+      NutProvider.processNuts(data, function(p_err) {
+        if (err) {
+          console.log('processing err:', p_err);
         }
-      });
+        else {
+          console.log('saved ids');
+        }
+        this.isRunning = false;
+      }.bind(this));
       this.last_checked = new Date().getTime();
-      client.setLastChecked(this.last_checked);
-      this.isRunning = false;
-      console.log('process done:', data.length);
+      NutProvider.setLastChecked(this.last_checked, function(err) { if (err) {console.log('failed to update last_checked:', err); }});
     }.bind(this));
   }
 };
@@ -56,7 +58,8 @@ function checker(graph, cacher) {
   url += '?limit=1';
 
   // check db top post
-  client.getLatest().then(function(latest) {
+  NutProvider.getLatest(function(err, latest) {
+    if (err) { console.log('getLatest error:', err); }
     console.log('latest:', latest);
     if (latest) {
       // check the FB top post
@@ -70,8 +73,6 @@ function checker(graph, cacher) {
     } else {
       cacher.process(graph);
     }
-  }, function(err) {
-    console.log('getLatest error:', err);
-  })
+  });
 
 }

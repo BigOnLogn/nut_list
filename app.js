@@ -22,8 +22,7 @@ var Cacher = require('./cacher').Cacher,
     cacher = new Cacher({interval: 5 * 60000}),
     startup_run = false;
 
-var NutProvider = require('./nutprovider').NutProvider,
-    client = new NutProvider('localhost', 27017);
+var NutProvider = require('./nutprovider').NutProvider;
 
 // all environments
 app.set('port', process.env.PORT || 10001);
@@ -54,13 +53,9 @@ app.get('/by_date', function(req, res) {
     console.log('req:', req.query);
     console.log('dates:', dates);
     console.log('res.send:', res.send);
-    client.getByDate(dates)
-    .then(function(results) {
+    NutProvider.getByDate(dates, function(err, results) {
       res.type('application/json');
-      res.send(results);
-    }, function(err) {
-      res.type('application/json');
-      res.send(err);
+      res.send(err || results);
     });
   }
 });
@@ -70,15 +65,9 @@ app.get('/by_user', function(req, res) {
   if (has_access(req, res)) {
     var dates = req.query['dates'];
 
-    client.getByUserId(req.param('user_id'), dates)
-    .then(function(results) {
-      console.log('getByUserId:', results);
+    NutProvider.getByUserId(req.param('user_id'), dates, function(err, results) {
       res.type('application/json');
-      res.send(results);
-    }, function(err) {
-      console.log('getByUserId err:', err);
-      res.type('application/json');
-      res.send(err);
+      res.send(err || results);
     });
   }
 });
@@ -111,6 +100,7 @@ function has_access(req, res) {
     startup_run = false;
     return true;
   }
+  res.type('application/json');
   res.send({error: 'no_access'});
   return false;
 }
