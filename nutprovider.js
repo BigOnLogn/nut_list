@@ -27,7 +27,7 @@ function process_raw_nut(nut) {
     }
   });
   if (nut['link'] && nut['link'].indexOf('youtu') > 0) {
-    nut['embed_link'] = create_embed_link(nut['link']);
+    nut['video_id'] = extract_video_id(nut['link']);
   }
   return nut;
 }
@@ -36,14 +36,15 @@ function filter_video(nut) {
   return nut['type'] == 'video';
 }
 
-function create_embed_link(link) {
+function extract_video_id(link) {
   var qs
   if (link.indexOf('youtu.be') >= 0) {
     qs = link.substring(link.indexOf('.be/') + 4);
-    return '<iframe width="420" height="345" src="http://www.youtube.com/embed/' + qs + '" frameborder="0" allowfullscreen></iframe>';
+    return qs;
   }
   qs = querystring.parse(link.substring(link.indexOf('?') + 1));
-  return '<iframe width="420" height="345" src="http://www.youtube.com/embed/' + qs['v'] + '" frameborder="0" allowfullscreen></iframe>';
+  return qs['v'];
+  // return '<iframe width="420" height="345" src="http://www.youtube.com/embed/' + qs['v'] + '" frameborder="0" allowfullscreen></iframe>';
 }
 
 function map_results(results) {

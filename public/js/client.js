@@ -66,7 +66,9 @@
   });
 
   $('#main_feed').delegate('.modalLauncher', 'click', function(evt) {
-    $('#' + this.id + '_modal').modal();
+    $('#' + this.id + '_modal').modal({
+      remote: '/embed/' + this.getAttribute('data-video-id')
+    });
   });
 
   var length_of_between_ = 8,

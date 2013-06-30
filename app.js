@@ -50,9 +50,6 @@ app.get('/by_date', function(req, res) {
   if (has_access(req, res)) {
     var dates = req.query['dates'];
 
-    console.log('req:', req.query);
-    console.log('dates:', dates);
-    console.log('res.send:', res.send);
     NutProvider.getByDate(dates, function(err, results) {
       res.type('application/json');
       res.send(err || results);
@@ -61,7 +58,6 @@ app.get('/by_date', function(req, res) {
 });
 
 app.get('/by_user', function(req, res) {
-  console.log('by_user:', req.query);
   if (has_access(req, res)) {
     var dates = req.query['dates'];
 
@@ -90,6 +86,12 @@ app.get('/members', function(req, res) {
       }
     });
   }
+});
+
+app.get('/embed/:video_id', function(req, res) {
+  console.log('params:', req.param('video_id'));
+  console.log('query:', req.query);
+  res.send('<iframe width="420" height="345" src="http://www.youtube.com/embed/' + req.param('video_id') + '" frameborder="0" allowfullscreen></iframe>');
 });
 
 function has_access(req, res) {

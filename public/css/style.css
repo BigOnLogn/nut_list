@@ -13,4 +13,8 @@ a#logout {
   input#members {
     width: 80%;
   }
+
+  .modalLauncher {
+    display: none;
+  }
 }
