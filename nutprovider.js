@@ -32,6 +32,10 @@ function process_raw_nut(nut) {
   return nut;
 }
 
+function filter_video(nut) {
+  return nut['type'] == 'video';
+}
+
 function create_embed_link(link) {
   var qs
   if (link.indexOf('youtu.be') >= 0) {
@@ -139,24 +143,29 @@ var NutProvider = exports.NutProvider = {
   },
 
   processNuts: function(raw_nuts, callback) {
-    async.map(raw_nuts, function(nut, p_cb) {
-      get_collection(function(col1_err, collection) {
-        if (col1_err) { p_cb(col1_err); }
-        else {
-          collection.find({'id': nut['id']}).toArray(function(find_err, docs) {
-            if (find_err || !docs || !docs.length) {
-              p_cb(null, process_raw_nut(nut));
-            }
-          });
-        }
-      });
-    }, function(err, nuts) {
-      if (err) {callback(err);}
+    // filter and map raw_nuts
+    var processed_nuts = raw_nuts.filter(filter_video).map(process_raw_nut);
+
+    // Get a connection for the id lookups
+    get_collection(function(err, coll) {
+      if (err) callback(err);
       else {
-        get_collection(function(col2_err, collection) {
-          if (col2_err) { callback(col2_err); }
+        // Extract ids
+        var ids = processed_nuts.map(function(n) {
+          return n['id'];
+        });
+        // Find all existing nuts
+        coll.find({'id': {$in: ids}}, {'id': 1}).toArray(function(find_err, results) {
+          if (results.length == processed_nuts.length) callback(null, []);
           else {
-            collection.insert(nuts, callback);
+            // Filter for new nuts
+            var new_nuts = processed_nuts.filter(function(n) {
+              return !results.some(function(r) {
+                return r['id'] == n['id'];
+              });
+            });
+            // insert new nuts, if any
+            coll.insert(new_nuts, callback);
           }
         });
       }

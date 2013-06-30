@@ -65,6 +65,10 @@
     }
   });
 
+  $('#main_feed').delegate('.modalLauncher', 'click', function(evt) {
+    $('#' + this.id + '_modal').modal();
+  });
+
   var length_of_between_ = 8,
       until_keywords = ['until', 'to', 'up to']
   function parseDate(val) {

@@ -65,9 +65,21 @@
             <p><a href="{{link}}">{{name}}</a></p>
             <p><cite>{{updated_time}}</cite><p>
             <p>{{message}}</p>
-            <small><cite>{{from.name}}</cite></small>
-            <a href="javascript:void()" title="Play video"><i class="icon-play"/></a>
-            {{{embed_link}}}
+            <small><cite><a href="https://www.facebook.com/{{from.id}}">{{from.name}}</a></cite></small>
+            <a id="{{id}}" class="modalLauncher" href="javascript:void()" title="Play video" data-toggle="modal" data-target="{{id}}_modal"><i class="icon-play"/></a>
+            <div id="{{id}}_modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labeledby="myModalLabel" aria-hidden="true">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+                <h3>{{name}}</h3>
+                <small><cite><a href="https://www.facebook.com/{{from.id}}">{{from.name}}</a></cite></small>
+              </div>
+              <div class="modal-body">
+                {{{embed_link}}}
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-primary" data-dismiss="modal" aria-hidden="true">Close</button>
+              </div>
+            </div>
           </blockquote>
         </div>
       </div>
