@@ -8,13 +8,3 @@ h4.error {
 a#logout {
   font-size: 0.75em;
 }
-@media (max-width: 768px) {
-  input#since,
-  input#members {
-    width: 80%;
-  }
-
-  .modalLauncher {
-    display: none;
-  }
-}

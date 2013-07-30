@@ -12,7 +12,7 @@
     }
   });
 
-  $('#sinceButton').click(function(evt) {
+  $('#searchButton').click(function(evt) {
     get_feed();
   });
 
@@ -20,7 +20,7 @@
     if ($(this).text() == 'Login') {
       FB.login(function(res) {
         if (res.authResponse) {
-          $('#sinceButton, #nameButton, #since, #members').removeAttr('disabled');
+          $('#searchButton, #since, #members').removeAttr('disabled');
           $('#login').text('Logout');
           get_members();
         } else {
@@ -30,7 +30,7 @@
     } else {
       FB.logout(function(){
         $('#login').text('Login');
-        $('#sinceButton, #nameButton, #since, #members').attr('disabled', 'disabled');
+        $('#searchButton, #since, #members').attr('disabled', 'disabled');
         selectedMember = null;
       });
     }

@@ -33,10 +33,10 @@
 
       FB.getLoginStatus(function(res) {
         if (res.status !== 'connected') {
-          $('#sinceButton, #nameButton, #since, #members').attr('disabled', 'disabled');
+          $('#searchButton, #since, #members').attr('disabled', 'disabled');
           $('#login').text('Login');
         } else {
-          $('#sinceButton, #nameButton, #since, #members').removeAttr('disabled');
+          $('#searchButton, #since, #members').removeAttr('disabled');
           $('#login').text('Logout');
           get_members();
         }
@@ -126,18 +126,20 @@
           </div>
           <div class="span9">
             <div class="controls controls-row">
-              <div class="input-append span12">
-                <input class="span10" type="text" id="since" name="since" placeholder="since when?" />
-                <button id="sinceButton" class="btn" type="button" disabled>Go!</button>
+              <div class="span12">
+                <input class="span12" type="text" id="since" name="since" placeholder="since when?" />
               </div>
             </div>
             <div class="controls controls-row">
-              <div class="input-append span12">
-                <input type="text" class="span10" id="members" placeholder="by who?" />
+              <div class="span12">
+                <input type="text" class="span12" id="members" placeholder="by who?" />
               </div>
             </div>
-            <div class="span9">
-              You can enter a date or instructions like '3 days ago' or 'last tuesday' or the name or a Member that posted it. Go ahead play around.
+            <div class="controls controls-row">
+              <button id="searchButton" class="btn btn-primary" type="button" disabled>Search!</button>
+            </div>
+            <div>
+              You can enter a date or search by a Member or both.<br/>Check the About section for more info.
             </div>
           </div>
         </div>
