@@ -68,6 +68,25 @@ app.get('/by_user', function(req, res) {
   }
 });
 
+app.get('/feed', function(req, res) {
+  if (has_access(req, res)) {
+    var params = {};
+    if (req.param('user_id')) {
+      params['user_id'] = req.param('user_id');
+    }
+    if (req.query['dates']) {
+      params['dates'] = req.query['dates'];
+    }
+    console.log('params:', params);
+    NutProvider.get(params, function(err, results) {
+      res.type('application/json');
+      res.send(err || results);
+    });
+  } else {
+    console.log('no access');
+  }
+});
+
 app.get('/members', function(req, res) {
   if (has_access(req, res)) {
     // always get member list from FB.
@@ -95,6 +114,7 @@ app.get('/embed/:video_id', function(req, res) {
 });
 
 function has_access(req, res) {
+  console.log('token:', req.param('access_token'));
   if (req.param('access_token')) {
     graph.setAccessToken(req.param('access_token'));
     // cacher throttles actual cache runs
@@ -102,6 +122,7 @@ function has_access(req, res) {
     startup_run = false;
     return true;
   }
+  console.log('fail');
   res.type('application/json');
   res.send({error: 'no_access'});
   return false;

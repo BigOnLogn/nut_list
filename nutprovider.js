@@ -108,6 +108,34 @@ var NutProvider = exports.NutProvider = {
     });
   },
 
+  get: function(params, callback) {
+    get_collection(function(err, collection) {
+      if (err) { callback(err); }
+      else {
+        var query = {};
+        if (params['user_id']) {
+          query['from.id'] = params['user_id'];
+        }
+        if (params['dates']) {
+          var dates = params['dates'];
+          if (dates['from']) {
+            query['updated_time'] = {'$gte': parseInt(dates['from'], 10)};
+          }
+          if(dates['to']) {
+            query['updated_time'] = query['updated_time'] || {};
+            query['updated_time']['$lt'] = parseInt(dates['to'], 10);
+          }
+        }
+        console.log('get query:', query);
+        collection.find(query).sort('updated_time', -1).toArray(function(find_err, docs) {
+          console.log('get docs:', docs.length);
+          if (find_err) { callback(find_err); }
+          else { callback(null, map_results(docs)); }
+        });
+      }
+    });
+  },
+
   getLatest: function(callback) {
     get_collection(function(err, collection) {
       if (err) { callback(err); }
