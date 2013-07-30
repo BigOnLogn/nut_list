@@ -46,28 +46,6 @@ app.configure('production', function() {
   app.use(express.errorHandler());
 });
 
-app.get('/by_date', function(req, res) {
-  if (has_access(req, res)) {
-    var dates = req.query['dates'];
-
-    NutProvider.getByDate(dates, function(err, results) {
-      res.type('application/json');
-      res.send(err || results);
-    });
-  }
-});
-
-app.get('/by_user', function(req, res) {
-  if (has_access(req, res)) {
-    var dates = req.query['dates'];
-
-    NutProvider.getByUserId(req.param('user_id'), dates, function(err, results) {
-      res.type('application/json');
-      res.send(err || results);
-    });
-  }
-});
-
 app.get('/feed', function(req, res) {
   if (has_access(req, res)) {
     var params = {};

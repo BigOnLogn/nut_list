@@ -12,22 +12,6 @@
     }
   });
 
-  // $('#sinceButton, #nameButton').click(function(evt) {
-  //   if ($(this)[0].id == 'sinceButton') {
-  //     var v = $since.val();
-  //     var d = parseDate(v);
-  //     $error.text('');
-  //     get_feed_by_date(d);
-  //   } else {
-  //     if (selectedMember) {
-  //       $error.text('');
-  //       var v = $since.val();
-  //       var d = parseDate(v);
-  //       get_feed_by_user(selectedMember, d);
-  //     }
-  //   }
-  // });
-
   $('#sinceButton').click(function(evt) {
     get_feed();
   });
@@ -105,42 +89,6 @@
 
   var entriesTemplate = Mustache.compile($('#feed_entries').html());
   $main_feed.html(entriesTemplate({entries:[]}));
-
-  // function get_feed_by_date(dateParams) {
-
-  //   if (dateParams) {
-  //     $main_feed.html('Loading...<hr/>');
-  //     var params = {
-  //       dates: dateParams,
-  //       access_token: FB.getAccessToken()
-  //     };
-
-  //     get_feed('/by_date', params);
-
-  //   } else {
-  //     $error.html("Uh Oh! I didn't understand you...<br/>Please try again...");
-  //   }
-  // }
-
-  // function get_feed_by_user(user_id, dateParams) {
-  //   if (user_id) {
-  //     $main_feed.html('Loading, this could take a min :/ ...<hr/>');
-
-  //     var params = {
-  //       user_id: user_id,
-  //       access_token: FB.getAccessToken()
-  //     };
-
-  //     if (dateParams) {
-  //       params['dates'] = dateParams;
-  //     }
-
-  //     get_feed('/by_user', params);
-
-  //   } else {
-  //     $error.html("Uh Oh! I didn't understand you...<br/>Please try again...");
-  //   }
-  // }
 
   function get_feed() {
     var params = {
